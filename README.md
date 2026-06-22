@@ -82,6 +82,25 @@ make build
 make shell
 ```
 
+## CI/CD
+
+Workflow GitHub Actions znajduje sie w `.github/workflows/ci.yml`.
+
+Na pull requestach uruchamia:
+
+- instalacje zaleznosci przez `npm ci`
+- lint przez `npm run lint`
+- build Nuxt przez `npm run build`
+- testowy build obrazu Docker
+
+Po pushu na `main` dodatkowo publikuje obraz Docker do GitHub Container Registry:
+
+```text
+ghcr.io/mbojarski1988/smart-diag-admin-front
+```
+
+Workflow korzysta z sekretow `NUXT_PUBLIC_API_URL` i `NUXT_PUBLIC_ADMIN_KEY`. Jesli nie sa ustawione, build uzywa wartosci domyslnych.
+
 ## Struktura projektu
 
 ```text

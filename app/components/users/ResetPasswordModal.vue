@@ -35,6 +35,8 @@
 </template>
 
 <script setup lang="ts">
+import { getApiErrorMessage } from '~/utils/apiError'
+
 const props = defineProps<{
   modelValue: boolean
   userId: number | null
@@ -77,8 +79,8 @@ async function submit() {
     })
     open.value = false
     emit('done')
-  } catch (e: any) {
-    error.value = e?.response?.data?.error ?? 'Wystąpił błąd. Spróbuj ponownie.'
+  } catch (e: unknown) {
+    error.value = getApiErrorMessage(e)
   } finally {
     loading.value = false
   }

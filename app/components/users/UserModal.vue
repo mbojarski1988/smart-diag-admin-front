@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import type { AuthUser, UserWrite } from '~/types'
+import { getApiErrorMessage } from '~/utils/apiError'
 
 const props = defineProps<{
   modelValue: boolean
@@ -140,8 +141,8 @@ async function submit() {
     }
     open.value = false
     emit('saved')
-  } catch (e: any) {
-    error.value = e?.response?.data?.error ?? 'Wystąpił błąd. Spróbuj ponownie.'
+  } catch (e: unknown) {
+    error.value = getApiErrorMessage(e)
   } finally {
     loading.value = false
   }
