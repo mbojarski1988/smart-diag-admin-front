@@ -74,6 +74,7 @@ const auth = useAuth()
 const navItems = [
   { label: 'Licencje', icon: 'i-heroicons-key', to: '/licenses' },
   { label: 'Użytkownicy', icon: 'i-heroicons-users', to: '/users' },
+  { label: 'Prompty AI', icon: 'i-heroicons-chat-bubble-left-right', to: '/ai-prompts' },
 ]
 
 const currentTitle = computed(() => {

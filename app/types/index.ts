@@ -35,3 +35,14 @@ export interface UserWrite {
   password?: string
   active?: boolean
 }
+
+export interface AiPrompt {
+  id: number
+  name: string
+  prompt: string
+}
+
+export interface AiPromptWrite {
+  name: string
+  prompt: string
+}
