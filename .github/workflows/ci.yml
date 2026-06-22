@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'front/**'
+  pull_request:
+    paths:
+      - 'front/**'
+
+defaults:
+  run:
+    working-directory: front
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://localhost:8000' }}
+          VITE_ADMIN_KEY: ${{ secrets.VITE_ADMIN_KEY || '' }}
+
+      - name: Docker build
+        run: docker build -t smardiagtool-front .
