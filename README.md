@@ -1,6 +1,11 @@
 # SmartDiagTool Front
 
-Panel administracyjny SmartDiagTool zbudowany w Nuxt 3. Aplikacja obsluguje logowanie administratora oraz widoki do zarzadzania licencjami i uzytkownikami.
+Panel administracyjny SmartDiagTool zbudowany w Nuxt 3. Aplikacja udostępnia logowanie administratora oraz widoki do zarządzania:
+
+- licencjami,
+- użytkownikami,
+- znanymi PID-ami,
+- promptami AI.
 
 ## Technologie
 
@@ -9,41 +14,46 @@ Panel administracyjny SmartDiagTool zbudowany w Nuxt 3. Aplikacja obsluguje logo
 - TypeScript
 - Nuxt UI
 - Axios
+- Docker / Docker Compose
 
 ## Wymagania
 
-- Node.js 22 albo Docker z Docker Compose
-- Dzialajace API backendu, domyslnie pod adresem `http://localhost:8000`
+- Node.js 22 i npm
+- działające API backendu, domyślnie pod adresem `http://localhost:8000`
+
+Alternatywnie można uruchomić projekt przez Docker Compose.
 
 ## Konfiguracja
 
-Skopiuj plik przykladowy i ustaw wartosci srodowiskowe:
+Skopiuj plik przykładowy i ustaw wartości środowiskowe:
 
 ```sh
 cp .env.example .env
 ```
 
-Dostepne zmienne:
+Dostępne zmienne:
 
 ```env
 NUXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
+`NUXT_PUBLIC_API_URL` wskazuje adres backendu używany przez proxy Nuxt dla żądań pod `/api`.
+
 ## Uruchomienie lokalne
 
-Zainstaluj zaleznosci:
+Zainstaluj zależności:
 
 ```sh
-npm install
+npm ci
 ```
 
-Uruchom aplikacje deweloperska:
+Uruchom aplikację deweloperską:
 
 ```sh
 npm run dev
 ```
 
-Aplikacja bedzie dostepna pod adresem `http://localhost:3000`.
+Aplikacja będzie dostępna pod adresem `http://localhost:3000`.
 
 ## Uruchomienie przez Docker Compose
 
@@ -59,11 +69,16 @@ Tryb deweloperski:
 make dev
 ```
 
-Zatrzymanie kontenerow:
+Zatrzymanie kontenerów:
 
 ```sh
 make down
 ```
+
+Domyślne porty można zmienić przez zmienne:
+
+- `FRONT_PORT` dla kontenera produkcyjnego,
+- `FRONT_DEV_PORT` dla kontenera deweloperskiego.
 
 ## Przydatne komendy
 
@@ -71,25 +86,33 @@ make down
 npm run lint
 npm run build
 npm run preview
+npm run generate
 ```
 
 Odpowiedniki przez Docker Compose:
 
 ```sh
+make install
 make lint
 make build
 make shell
 ```
 
+Po zbudowaniu aplikację serwerową można uruchomić także lokalnie:
+
+```sh
+node .output/server/index.mjs
+```
+
 ## CI/CD
 
-Workflow GitHub Actions znajduje sie w `.github/workflows/ci.yml`.
+Workflow GitHub Actions znajduje się w `.github/workflows/ci.yml`.
 
 Na pull requestach uruchamia:
 
-- instalacje zaleznosci przez `npm ci`
-- lint przez `npm run lint`
-- build Nuxt przez `npm run build`
+- `npm ci`
+- `npm run lint`
+- `npm run build`
 - testowy build obrazu Docker
 
 Po pushu na `main` dodatkowo publikuje obraz Docker do GitHub Container Registry:
@@ -98,15 +121,13 @@ Po pushu na `main` dodatkowo publikuje obraz Docker do GitHub Container Registry
 ghcr.io/mbojarski1988/smart-diag-admin-front
 ```
 
-Workflow korzysta z sekretu `NUXT_PUBLIC_API_URL`. Jesli nie jest ustawiony, build uzywa wartosci domyslnej.
-
 ## Struktura projektu
 
 ```text
 app/
   assets/css/        Style globalne
-  components/        Komponenty widokow
-  composables/       Logika wspoldzielona, np. autoryzacja
+  components/        Komponenty widoków
+  composables/       Logika współdzielona, np. autoryzacja
   layouts/           Layout aplikacji
   middleware/        Middleware Nuxt, np. ochrona tras
   pages/             Strony aplikacji
@@ -114,6 +135,18 @@ app/
   types/             Typy TypeScript
 ```
 
-## API
+## Routing
 
-Klient HTTP jest skonfigurowany w `app/plugins/axios.ts`. Token JWT jest przechowywany w cookie `jwt` i automatycznie dodawany do naglowka `Authorization` dla kolejnych zapytan.
+Najważniejsze widoki aplikacji:
+
+- `/login` — logowanie administratora,
+- `/licenses` — zarządzanie licencjami,
+- `/users` — zarządzanie użytkownikami,
+- `/known-pids` — zarządzanie znanymi PID-ami,
+- `/ai-prompts` — zarządzanie promptami AI.
+
+Ścieżka `/` przekierowuje zalogowanego użytkownika do widoku licencji.
+
+## API i autoryzacja
+
+Klient HTTP jest skonfigurowany w `app/plugins/axios.ts`. Token JWT jest przechowywany w cookie `jwt` i automatycznie dodawany do nagłówka `Authorization` dla kolejnych zapytań. Przy odpowiedzi `401` aplikacja czyści stan sesji i przekierowuje użytkownika z powrotem do `/login`.
