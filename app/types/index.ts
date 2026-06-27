@@ -46,3 +46,22 @@ export interface AiPromptWrite {
   name: string
   prompt: string
 }
+
+export interface KnownPid {
+  id: number
+  model: string
+  pid: string
+  name: string
+  unit: string | null
+  description: string | null
+  active: boolean
+}
+
+export interface KnownPidWrite {
+  model: string
+  pid: string
+  name: string
+  unit?: string
+  description?: string
+  active: boolean
+}
