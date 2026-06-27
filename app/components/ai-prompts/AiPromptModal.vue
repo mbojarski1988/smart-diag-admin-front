@@ -54,7 +54,7 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const { $api } = useNuxtApp() as { $api: ReturnType<typeof import('axios').default.create> }
+const $api = useApi()
 
 const open = computed({
   get: () => props.modelValue,
@@ -85,13 +85,25 @@ watch(open, (val) => {
 })
 
 async function submit() {
+  if (loading.value) return
+
   error.value = ''
+  if (!form.name.trim() || !form.prompt.trim()) {
+    error.value = 'Uzupełnij nazwę i treść promptu.'
+    return
+  }
+
   loading.value = true
   try {
+    const payload: AiPromptWrite = {
+      name: form.name.trim(),
+      prompt: form.prompt.trim(),
+    }
+
     if (isEdit.value && props.aiPrompt) {
-      await $api.patch(`/api/admin/ai-prompts/${props.aiPrompt.id}`, form)
+      await $api.patch(`/api/admin/ai-prompts/${props.aiPrompt.id}`, payload)
     } else {
-      await $api.post('/api/admin/ai-prompts', form)
+      await $api.post('/api/admin/ai-prompts', payload)
     }
     open.value = false
     emit('saved')

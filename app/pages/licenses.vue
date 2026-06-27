@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="text-xl font-semibold text-(--ui-text-highlighted)">Licencje</h2>
         <p class="text-sm text-(--ui-text-muted)">Zarządzaj licencjami klientów</p>
@@ -11,7 +11,7 @@
     <UCard>
       <UTable :data="licenses" :columns="columns" :loading="loading">
         <template #validUntil-cell="{ row }">
-          {{ row.original.validUntil.split('T')[0] }}
+          {{ formatDate(row.original.validUntil) }}
         </template>
 
         <template #active-cell="{ row }">
@@ -31,6 +31,7 @@
               variant="ghost"
               icon="i-heroicons-pencil-square"
               title="Edytuj"
+              :aria-label="`Edytuj licencję ${row.original.clientName}`"
               @click="openEdit(row.original)"
             />
             <UButton
@@ -39,6 +40,7 @@
               :icon="row.original.active ? 'i-heroicons-no-symbol' : 'i-heroicons-check-circle'"
               :color="row.original.active ? 'warning' : 'success'"
               :title="row.original.active ? 'Dezaktywuj' : 'Aktywuj'"
+              :aria-label="`${row.original.active ? 'Dezaktywuj' : 'Aktywuj'} licencję ${row.original.clientName}`"
               @click="confirmToggle(row.original)"
             />
             <UButton
@@ -47,11 +49,19 @@
               color="error"
               icon="i-heroicons-trash"
               title="Usuń"
+              :aria-label="`Usuń licencję ${row.original.clientName}`"
               @click="confirmDelete(row.original)"
             />
           </div>
         </template>
       </UTable>
+
+      <div
+        v-if="!loading && !error && licenses.length === 0"
+        class="p-6 text-center text-sm text-(--ui-text-muted)"
+      >
+        Brak licencji do wyświetlenia.
+      </div>
 
       <div v-if="error" class="p-4">
         <UAlert
@@ -113,11 +123,12 @@
 
 <script setup lang="ts">
 import type { License } from '~/types'
+import { getApiErrorMessage } from '~/utils/apiError'
+import { formatDate } from '~/utils/date'
 
 definePageMeta({ middleware: 'auth' })
 
-const { $api } = useNuxtApp() as { $api: ReturnType<typeof import('axios').default.create> }
-const config = useRuntimeConfig()
+const $api = useApi()
 
 const licenses = ref<License[]>([])
 const loading = ref(true)
@@ -140,17 +151,11 @@ const columns = [
   { id: 'actions', header: 'Akcje' },
 ]
 
-const adminHeaders = computed(() => ({
-  'X-Admin-Key': config.public.adminKey as string,
-}))
-
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    const { data } = await $api.get<{ items: License[] }>('/api/admin/licenses', {
-      headers: adminHeaders.value,
-    })
+    const { data } = await $api.get<{ items: License[] }>('/api/admin/licenses')
     licenses.value = data.items
   } catch {
     error.value = 'Nie udało się pobrać licencji.'
@@ -181,15 +186,15 @@ function confirmToggle(license: License) {
 
 async function doDelete() {
   if (!targetLicense.value) return
+  if (actionLoading.value) return
   actionLoading.value = true
+  error.value = ''
   try {
-    await $api.delete(`/api/admin/licenses/${targetLicense.value.id}`, {
-      headers: adminHeaders.value,
-    })
+    await $api.delete(`/api/admin/licenses/${targetLicense.value.id}`)
     isDeleteOpen.value = false
     await load()
-  } catch {
-    isDeleteOpen.value = false
+  } catch (e: unknown) {
+    error.value = getApiErrorMessage(e, 'Nie udało się usunąć licencji.')
   } finally {
     actionLoading.value = false
   }
@@ -197,25 +202,24 @@ async function doDelete() {
 
 async function doToggle() {
   if (!targetLicense.value) return
+  if (actionLoading.value) return
   actionLoading.value = true
+  error.value = ''
   try {
     if (targetLicense.value.active) {
       await $api.post(
         `/api/admin/licenses/${targetLicense.value.id}/deactivate`,
-        {},
-        { headers: adminHeaders.value },
       )
     } else {
       await $api.patch(
         `/api/admin/licenses/${targetLicense.value.id}`,
         { active: true },
-        { headers: adminHeaders.value },
       )
     }
     isToggleOpen.value = false
     await load()
-  } catch {
-    isToggleOpen.value = false
+  } catch (e: unknown) {
+    error.value = getApiErrorMessage(e, 'Nie udało się zmienić statusu licencji.')
   } finally {
     actionLoading.value = false
   }

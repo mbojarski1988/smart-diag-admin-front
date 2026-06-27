@@ -27,7 +27,6 @@ Dostepne zmienne:
 
 ```env
 NUXT_PUBLIC_API_URL=http://localhost:8000
-NUXT_PUBLIC_ADMIN_KEY=change-me-admin-key
 ```
 
 ## Uruchomienie lokalne
@@ -99,7 +98,7 @@ Po pushu na `main` dodatkowo publikuje obraz Docker do GitHub Container Registry
 ghcr.io/mbojarski1988/smart-diag-admin-front
 ```
 
-Workflow korzysta z sekretow `NUXT_PUBLIC_API_URL` i `NUXT_PUBLIC_ADMIN_KEY`. Jesli nie sa ustawione, build uzywa wartosci domyslnych.
+Workflow korzysta z sekretu `NUXT_PUBLIC_API_URL`. Jesli nie jest ustawiony, build uzywa wartosci domyslnej.
 
 ## Struktura projektu
 

@@ -2,6 +2,7 @@ up:
 	docker compose up --build -d
 
 dev:
+	docker compose stop front
 	docker compose --profile dev up front-dev
 
 down:
