@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="text-xl font-semibold text-(--ui-text-highlighted)">Prompty AI</h2>
         <p class="text-sm text-(--ui-text-muted)">Zarządzaj promptami używanymi przez moduły AI</p>
@@ -23,6 +23,7 @@
               variant="ghost"
               icon="i-heroicons-pencil-square"
               title="Edytuj"
+              :aria-label="`Edytuj prompt ${row.original.name}`"
               @click="openEdit(row.original)"
             />
             <UButton
@@ -31,11 +32,19 @@
               color="error"
               icon="i-heroicons-trash"
               title="Usuń"
+              :aria-label="`Usuń prompt ${row.original.name}`"
               @click="confirmDelete(row.original)"
             />
           </div>
         </template>
       </UTable>
+
+      <div
+        v-if="!loading && !error && aiPrompts.length === 0"
+        class="p-6 text-center text-sm text-(--ui-text-muted)"
+      >
+        Brak promptów AI do wyświetlenia.
+      </div>
 
       <div v-if="error" class="p-4">
         <UAlert
@@ -69,10 +78,11 @@
 
 <script setup lang="ts">
 import type { AiPrompt } from '~/types'
+import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: 'auth' })
 
-const { $api } = useNuxtApp() as { $api: ReturnType<typeof import('axios').default.create> }
+const $api = useApi()
 
 const aiPrompts = ref<AiPrompt[]>([])
 const loading = ref(true)
@@ -122,13 +132,15 @@ function confirmDelete(aiPrompt: AiPrompt) {
 
 async function doDelete() {
   if (!deleteTarget.value) return
+  if (deleteLoading.value) return
   deleteLoading.value = true
+  error.value = ''
   try {
     await $api.delete(`/api/admin/ai-prompts/${deleteTarget.value.id}`)
     isDeleteOpen.value = false
     await load()
-  } catch {
-    isDeleteOpen.value = false
+  } catch (e: unknown) {
+    error.value = getApiErrorMessage(e, 'Nie udało się usunąć promptu AI.')
   } finally {
     deleteLoading.value = false
   }

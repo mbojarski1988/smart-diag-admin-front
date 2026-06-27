@@ -2,7 +2,7 @@
   <div class="flex h-screen bg-(--ui-bg-muted) overflow-hidden">
     <!-- Sidebar -->
     <aside
-      class="flex flex-col w-64 bg-(--ui-bg) border-r border-(--ui-border) shrink-0"
+      class="hidden md:flex flex-col w-64 bg-(--ui-bg) border-r border-(--ui-border) shrink-0"
     >
       <!-- Logo -->
       <div class="flex items-center gap-2.5 px-4 py-4 border-b border-(--ui-border)">
@@ -18,7 +18,7 @@
           :to="item.to"
           class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
           :class="
-            route.path.startsWith(item.to)
+            isActive(item.to)
               ? 'bg-(--ui-primary)/10 text-(--ui-primary)'
               : 'text-(--ui-text-muted) hover:bg-(--ui-bg-elevated) hover:text-(--ui-text)'
           "
@@ -53,13 +53,31 @@
             color="neutral"
             variant="ghost"
             size="sm"
+            :aria-label="colorMode.value === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'"
             @click="colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'"
           />
         </div>
       </header>
 
+      <nav class="md:hidden flex gap-1 overflow-x-auto px-3 py-2 bg-(--ui-bg) border-b border-(--ui-border) shrink-0">
+        <NuxtLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
+          :class="
+            isActive(item.to)
+              ? 'bg-(--ui-primary)/10 text-(--ui-primary)'
+              : 'text-(--ui-text-muted) hover:bg-(--ui-bg-elevated) hover:text-(--ui-text)'
+          "
+        >
+          <UIcon :name="item.icon" class="size-5 shrink-0" />
+          {{ item.label }}
+        </NuxtLink>
+      </nav>
+
       <!-- Page content -->
-      <main class="flex-1 overflow-y-auto p-6">
+      <main class="flex-1 overflow-y-auto p-4 md:p-6">
         <slot />
       </main>
     </div>
@@ -77,8 +95,12 @@ const navItems = [
   { label: 'Prompty AI', icon: 'i-heroicons-chat-bubble-left-right', to: '/ai-prompts' },
 ]
 
+function isActive(path: string) {
+  return route.path === path || route.path.startsWith(`${path}/`)
+}
+
 const currentTitle = computed(() => {
-  const item = navItems.find((i) => route.path.startsWith(i.to))
+  const item = navItems.find((i) => isActive(i.to))
   return item?.label ?? 'Dashboard'
 })
 </script>

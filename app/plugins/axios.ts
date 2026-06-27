@@ -2,6 +2,7 @@ import axios from 'axios'
 
 export default defineNuxtPlugin(() => {
   const token = useCookie<string | null>('jwt')
+  const user = useState('auth.user', () => null)
   const config = useRuntimeConfig()
 
   const client = axios.create({
@@ -19,6 +20,7 @@ export default defineNuxtPlugin(() => {
     (err) => {
       if (err.response?.status === 401) {
         token.value = null
+        user.value = null
         navigateTo('/login')
       }
       return Promise.reject(err)

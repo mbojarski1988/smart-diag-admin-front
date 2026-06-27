@@ -12,6 +12,7 @@
             type="password"
             placeholder="Min. 8 znaków"
             class="w-full"
+            required
           />
         </UFormField>
 
@@ -48,7 +49,7 @@ const emit = defineEmits<{
   done: []
 }>()
 
-const { $api } = useNuxtApp() as { $api: ReturnType<typeof import('axios').default.create> }
+const $api = useApi()
 
 const open = computed({
   get: () => props.modelValue,
@@ -67,6 +68,12 @@ watch(open, (val) => {
 })
 
 async function submit() {
+  if (loading.value) return
+  if (!props.userId) {
+    error.value = 'Nie wybrano użytkownika.'
+    return
+  }
+
   if (password.value.length < 8) {
     error.value = 'Hasło musi mieć minimum 8 znaków.'
     return

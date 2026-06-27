@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="text-xl font-semibold text-(--ui-text-highlighted)">Użytkownicy</h2>
         <p class="text-sm text-(--ui-text-muted)">Zarządzaj kontami użytkowników</p>
@@ -43,6 +43,7 @@
               variant="ghost"
               icon="i-heroicons-pencil-square"
               title="Edytuj"
+              :aria-label="`Edytuj użytkownika ${row.original.firstName} ${row.original.lastName}`"
               @click="openEdit(row.original)"
             />
             <UButton
@@ -51,6 +52,7 @@
               icon="i-heroicons-key"
               color="warning"
               title="Reset hasła"
+              :aria-label="`Resetuj hasło użytkownika ${row.original.firstName} ${row.original.lastName}`"
               @click="openResetPassword(row.original)"
             />
             <UButton
@@ -59,11 +61,19 @@
               color="error"
               icon="i-heroicons-trash"
               title="Usuń"
+              :aria-label="`Usuń użytkownika ${row.original.firstName} ${row.original.lastName}`"
               @click="confirmDelete(row.original)"
             />
           </div>
         </template>
       </UTable>
+
+      <div
+        v-if="!loading && !error && users.length === 0"
+        class="p-6 text-center text-sm text-(--ui-text-muted)"
+      >
+        Brak użytkowników do wyświetlenia.
+      </div>
 
       <div v-if="error" class="p-4">
         <UAlert
@@ -103,10 +113,11 @@
 
 <script setup lang="ts">
 import type { AuthUser } from '~/types'
+import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: 'auth' })
 
-const { $api } = useNuxtApp() as { $api: ReturnType<typeof import('axios').default.create> }
+const $api = useApi()
 
 const users = ref<AuthUser[]>([])
 const loading = ref(true)
@@ -166,13 +177,15 @@ function confirmDelete(user: AuthUser) {
 
 async function doDelete() {
   if (!deleteTarget.value) return
+  if (deleteLoading.value) return
   deleteLoading.value = true
+  error.value = ''
   try {
     await $api.delete(`/api/admin/users/${deleteTarget.value.id}`)
     isDeleteOpen.value = false
     await load()
-  } catch {
-    isDeleteOpen.value = false
+  } catch (e: unknown) {
+    error.value = getApiErrorMessage(e, 'Nie udało się usunąć użytkownika.')
   } finally {
     deleteLoading.value = false
   }

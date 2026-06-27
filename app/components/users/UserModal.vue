@@ -85,7 +85,7 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const { $api } = useNuxtApp() as { $api: ReturnType<typeof import('axios').default.create> }
+const $api = useApi()
 
 const open = computed({
   get: () => props.modelValue,
@@ -129,10 +129,27 @@ watch(open, (val) => {
 })
 
 async function submit() {
+  if (loading.value) return
+
   error.value = ''
+  if (!form.email.trim() || !form.firstName.trim() || !form.lastName.trim()) {
+    error.value = 'Uzupełnij e-mail, imię i nazwisko.'
+    return
+  }
+
+  if (!isEdit.value && (!form.password || form.password.length < 8)) {
+    error.value = 'Hasło musi mieć minimum 8 znaków.'
+    return
+  }
+
   loading.value = true
   try {
-    const payload: UserWrite = { ...form }
+    const payload: UserWrite = {
+      ...form,
+      email: form.email.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+    }
     if (isEdit.value && props.user) {
       delete payload.password
       await $api.patch(`/api/admin/users/${props.user.id}`, payload)

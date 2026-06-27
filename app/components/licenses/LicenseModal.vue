@@ -61,6 +61,7 @@
 <script setup lang="ts">
 import type { License, LicenseWrite } from '~/types'
 import { getApiErrorMessage } from '~/utils/apiError'
+import { toDateInputValue } from '~/utils/date'
 
 const props = defineProps<{
   modelValue: boolean
@@ -72,8 +73,7 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const { $api } = useNuxtApp() as { $api: ReturnType<typeof import('axios').default.create> }
-const config = useRuntimeConfig()
+const $api = useApi()
 
 const open = computed({
   get: () => props.modelValue,
@@ -100,7 +100,7 @@ watch(open, (val) => {
       form.clientName = props.license.clientName
       form.clientEmail = props.license.clientEmail
       form.note = props.license.note ?? ''
-      form.validUntil = props.license.validUntil.split('T')[0]
+      form.validUntil = toDateInputValue(props.license.validUntil)
     } else {
       Object.assign(form, defaultForm())
     }
@@ -108,14 +108,27 @@ watch(open, (val) => {
 })
 
 async function submit() {
+  if (loading.value) return
+
   error.value = ''
+  if (!form.clientName.trim() || !form.clientEmail.trim() || !form.validUntil) {
+    error.value = 'Uzupełnij nazwę klienta, e-mail i datę ważności.'
+    return
+  }
+
   loading.value = true
-  const headers = { 'X-Admin-Key': config.public.adminKey as string }
   try {
+    const payload: LicenseWrite = {
+      clientName: form.clientName.trim(),
+      clientEmail: form.clientEmail.trim(),
+      note: form.note?.trim() || undefined,
+      validUntil: form.validUntil,
+    }
+
     if (isEdit.value && props.license) {
-      await $api.patch(`/api/admin/licenses/${props.license.id}`, form, { headers })
+      await $api.patch(`/api/admin/licenses/${props.license.id}`, payload)
     } else {
-      await $api.post('/api/admin/licenses', form, { headers })
+      await $api.post('/api/admin/licenses', payload)
     }
     open.value = false
     emit('saved')
